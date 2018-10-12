@@ -2,14 +2,14 @@ var numBeatsSld; // number of beats slider
 var subDivSld; // subdivision slider
 var tempoSld; // tempo slider
 var startStopBtn; // start/stop button
-var beatsVal;
-var subDVal;
-var tempoVal;
+var beatsVal = 4; // defaults...
+var subDVal = 4;
+var tempoVal = 120;
 let aa; // container for first sound source
-let aPat; // first sound source pattern
+let aPat = []; // first sound source pattern
 let aPhrase; // first sound source phrase. determines how pattern is interpreted
 let bb; // second sound source
-let bPat;
+let bPat = [];
 let bPhrase;
 let drums; // part.  attach phrase to part, transport to drive the phrase
 let bpmCTRL;
@@ -20,7 +20,7 @@ let cellWidth;
 
 /**
  * OPEN TICKETS
- * 
+ * - attach event listener to start/stop button
  */
 
 function setup() {
@@ -48,9 +48,24 @@ function setup() {
 
     // start/stop button
     startStopBtn = createButton('Start/Stop');
+    startStopBtn.mousePressed(togglePlay);
     startStopBtn.position(320, 250);
     startStopBtn.style('width', '160px');
 
+    // create pattterns
+    createPatterns();
+
+    aPhrase = new p5.Phrase('aa', function(time) {
+        aa.play(time);
+    }, aPat);
+    bPhrase = new p5.Phrase('bb', function(time) {
+        bb.play(time);
+    }, bPat);
+    
+    drums = new p5.Part();
+
+    drums.addPhrase(aPhrase);
+    drums.addPhrase(bPhrase);
 
 }
 
@@ -77,5 +92,35 @@ function draw() {
     text(beatsVal, numBeatsSld.x+10,65);
     text(subDVal, subDivSld.x+10,65);
     text(tempoVal, tempoSld.x-10,165);
-    
+}
+
+function createPatterns() {
+    for (let i = 0; i < 2*beatsVal; i++) {
+        if (i === 0) {
+            aPat[i] = 1;
+            bPat[i] = 0;
+        } else if (i % 2 == 0) {
+            aPat[i] = 0;
+            bPat[i] = 1;
+        } else {
+            aPat[i] = 0;
+            bPat[i] = 0;
+        }
+    }
+
+    console.log(aPat);
+    console.log(bPat);
+}
+
+function togglePlay() {
+    if (aa.isLoaded() && bb.isLoaded()) {
+        if (!drums.isPlaying) {
+            drums.metro.metroTicks = 0;
+            drums.loop();
+        } else {
+            drums.stop(); // works like a pause button
+        }
+    } else {
+        console.log('hold on a sec')
+    }
 }
