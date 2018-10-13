@@ -56,9 +56,10 @@ function setup() {
     startStopBtn.position(320, 250);
     startStopBtn.style('width', '160px');
 
-    // create pattterns
+    // create pattterns for the high and low sounds
     createPatterns();
 
+    // arbitrary
     aPhrase = new p5.Phrase('aa', function(time) {
         aa.play(time);
     }, aPat);
@@ -66,29 +67,29 @@ function setup() {
         bb.play(time);
     }, bPat);
     
+    // create main drums part
     drums = new p5.Part();
 
+    //set tempo
     drums.setBPM(tempoSld.value()/2);
 
+    // add two phrases to drums part
     drums.addPhrase(aPhrase);
     drums.addPhrase(bPhrase);
 
 }
 
-function beatsBtn() {
+function beatsBtn() { // i don't remember why this is here
     console.log('okay ' + this.value());
 }
 
-function subDivSldCalc() {
-    console.log();
-}
 
-function draw() {
+function draw() { // this function gets called 60 times a second, arbitrarily
 
-    background(255,0,0);
-    beatsVal = numBeatsSld.value();
-    subDVal = pow(2,subDivSld.value());
-    tempoVal = tempoSld.value();
+    background(255,0,0); // paint background
+    beatsVal = numBeatsSld.value(); // tracks value of numBeats slider
+    subDVal = pow(2,subDivSld.value()); // .. of subdivision
+    tempoVal = tempoSld.value(); // and tempo
 
     text("Number of Beats", numBeatsSld.x+30,65);
     text("Base Subdivision", subDivSld.x+30,65);
@@ -105,8 +106,9 @@ function createPatterns() {
     console.log(subDVal);
     console.log(beatsVal);
 
-    if (subDVal <= 4) {
+    if (subDVal <= 4) { // if quarter note or longer, quarters and eights
 
+        // Produces 4/4 >>  1-2-3-4- pattern
         for (let i = 0; i < 2*beatsVal; i++) {
             if (i === 0) {
                 aPat[i] = 1;
@@ -120,10 +122,11 @@ function createPatterns() {
             }
         }
 
-    } else {
+    } else { // if less, just eighths
 
         console.log('eighths and above');
 
+        // produces 1-3-5-7 in 7/8
         for (let i = 0; i < beatsVal; i++) {
             if (i === 0) {
                 console.log('1');
@@ -140,30 +143,15 @@ function createPatterns() {
             }
         }
 
+        // trim off remaining notes from default 4/4 representation
         while (beatsVal < aPat.length) {
             aPat.pop();
             bPat.pop();
         }
     }
 
-    
-    
-    
-    // for (let i = 0; i < 2*beatsVal; i++) {
-    //     if (i === 0) {
-    //         aPat[i] = 1;
-    //         bPat[i] = 0;
-    //     } else if (i % 2 == 0) {
-    //         aPat[i] = 0;
-    //         bPat[i] = 1;
-    //     } else {
-    //         aPat[i] = 0;
-    //         bPat[i] = 0;
-    //     }
-    // }
-
-    console.log(aPat);
-    console.log(bPat);
+    // console.log(aPat);
+    // console.log(bPat);
 }
 
 function checkBPM() { // do we need this??
@@ -172,21 +160,24 @@ function checkBPM() { // do we need this??
 }
 
 function togglePlay() {
+    // console logs settings of last played setting
     console.log(beatsVal);
     console.log(subDVal);
     console.log(tempoVal);
     
+    // makes sure pattern is updates
     createPatterns();
     checkBPM();
-    
+
+    // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
-            drums.metro.metroTicks = 0;
+            drums.metro.metroTicks = 0; // reset loop to start 
             drums.loop();
         } else {
             drums.stop(); // works like a pause button
         }
-    } else {
-        console.log('hold on a sec')
+    } else { // if sounds haven't loaded yet
+        console.log('hold on a sec');
     }
 }
