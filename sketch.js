@@ -2,9 +2,9 @@ var numBeatsSld; // number of beats slider
 var subDivSld; // subdivision slider
 var tempoSld; // tempo slider
 var startStopBtn; // start/stop button
-var beatsVal = 4; // defaults...
+var beatsVal = 4; // defaults... 4/4 @ 120
 var subDVal = 4;
-var tempoVal = 120;
+var tempoVal = 60;
 let aa; // container for first sound source
 let aPat = []; // first sound source pattern
 let aPhrase; // first sound source phrase. determines how pattern is interpreted
@@ -20,7 +20,8 @@ let cellWidth;
 
 /**
  * OPEN TICKETS
- * - attach event listener to start/stop button
+ * - make sure tempo updates during session as well
+ * - tempo is 2x as fast as it needs to be
  */
 
 function setup() {
@@ -45,6 +46,9 @@ function setup() {
     tempoSld = createSlider(30,300,120);
     tempoSld.position(100, 250);
     tempoSld.style('width', '160px');
+    tempoSld.input(() => {
+        drums.setBPM(tempoSld.value()/2)
+    });
 
     // start/stop button
     startStopBtn = createButton('Start/Stop');
@@ -63,6 +67,8 @@ function setup() {
     }, bPat);
     
     drums = new p5.Part();
+
+    drums.setBPM(tempoSld.value()/2);
 
     drums.addPhrase(aPhrase);
     drums.addPhrase(bPhrase);
@@ -95,24 +101,84 @@ function draw() {
 }
 
 function createPatterns() {
-    for (let i = 0; i < 2*beatsVal; i++) {
-        if (i === 0) {
-            aPat[i] = 1;
-            bPat[i] = 0;
-        } else if (i % 2 == 0) {
-            aPat[i] = 0;
-            bPat[i] = 1;
-        } else {
-            aPat[i] = 0;
-            bPat[i] = 0;
+
+    console.log(subDVal);
+    console.log(beatsVal);
+
+    if (subDVal <= 4) {
+
+        for (let i = 0; i < 2*beatsVal; i++) {
+            if (i === 0) {
+                aPat[i] = 1;
+                bPat[i] = 0;
+            } else if (i % 2 == 0) {
+                aPat[i] = 0;
+                bPat[i] = 1;
+            } else {
+                aPat[i] = 0;
+                bPat[i] = 0;
+            }
+        }
+
+    } else {
+
+        console.log('eighths and above');
+
+        for (let i = 0; i < beatsVal; i++) {
+            if (i === 0) {
+                console.log('1');
+                aPat[i] = 1;
+                bPat[i] = 0;
+            } else if (i % 2 == 0) {
+                console.log('2');
+                aPat[i] = 0;
+                bPat[i] = 1;
+            } else {
+                console.log('3');
+                aPat[i] = 0;
+                bPat[i] = 0;
+            }
+        }
+
+        while (beatsVal < aPat.length) {
+            aPat.pop();
+            bPat.pop();
         }
     }
+
+    
+    
+    
+    // for (let i = 0; i < 2*beatsVal; i++) {
+    //     if (i === 0) {
+    //         aPat[i] = 1;
+    //         bPat[i] = 0;
+    //     } else if (i % 2 == 0) {
+    //         aPat[i] = 0;
+    //         bPat[i] = 1;
+    //     } else {
+    //         aPat[i] = 0;
+    //         bPat[i] = 0;
+    //     }
+    // }
 
     console.log(aPat);
     console.log(bPat);
 }
 
+function checkBPM() { // do we need this??
+    console.log('checking BPM');
+
+}
+
 function togglePlay() {
+    console.log(beatsVal);
+    console.log(subDVal);
+    console.log(tempoVal);
+    
+    createPatterns();
+    checkBPM();
+    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
             drums.metro.metroTicks = 0;
