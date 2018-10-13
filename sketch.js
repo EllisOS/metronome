@@ -1,10 +1,10 @@
-var numBeatsSld; // number of beats slider
-var subDivSld; // subdivision slider
-var tempoSld; // tempo slider
-var startStopBtn; // start/stop button
-var beatsVal = 4; // defaults... 4/4 @ 120
-var subDVal = 4;
-var tempoVal = 60;
+let numBeatsSld; // number of beats slider
+let subDivSld; // subdivision slider
+let tempoSld; // tempo slider
+let startStopBtn; // start/stop button
+let beatsVal = 4; // defaults... 4/4 @ 120
+let subDVal = 4;
+let tempoVal = 60;
 let aa; // container for first sound source
 let aPat = []; // first sound source pattern
 let aPhrase; // first sound source phrase. determines how pattern is interpreted
@@ -17,6 +17,12 @@ let beatLength;
 let canvas;
 let sPat; // index pattern
 let cellWidth;
+let matrixX = 550; // default specs for matrix
+let matrixY = 100;
+let matrixWidth = 300;
+let matrixHeight = 60;
+let multiplier = 1; // used to determine the inner configuration of the matrix
+let numLinesWide = 4;
 
 /**
  * OPEN TICKETS
@@ -25,10 +31,18 @@ let cellWidth;
  * - specify that when beatsVal is 3, every subdivision should base level counting
  * - specify models with beats val;ues divisible by 3
  * - problem with moving numBeats slider down and it not picking up
+ * - getMatrixDim() should be a one liner
+ * - everytime the numBeats or subdivision slider is moved, refresh the matrix
+ * 
+ * ?? Tap Tempo ??
  */
 
 function setup() {
-    createCanvas(1920, 1080);
+    const width = 1920;
+    const height = 1080;
+    createCanvas(width, height);
+
+    background(255,0,0); // paint background
 
     // sound sources
     aa = loadSound('./assets/first_sound.wav', function() {});
@@ -38,19 +52,28 @@ function setup() {
     numBeatsSld = createSlider(1, 20, 4);
     numBeatsSld.position(100, 150);
     numBeatsSld.style('width', '160px');
+    numBeatsSld.input(() => {
+        console.log('number of beats changed to ' + numBeatsSld.value());
+        beatsVal = numBeatsSld.value();
+        drawMatrix();
+    });
 
     // subdivision slider
     // 0-5 base to represent pow(2,n)
     subDivSld = createSlider(0,5,2);
     subDivSld.position(320, 150);
     subDivSld.style('width', '160px');
+    subDivSld.input(() => {
+        subDVal = pow(2,subDivSld.value());
+        drawMatrix();
+    });
 
     // tempo slider
     tempoSld = createSlider(30,300,120);
     tempoSld.position(100, 250);
     tempoSld.style('width', '160px');
     tempoSld.input(() => {
-        drums.setBPM(tempoSld.value()/2)
+        drums.setBPM(tempoSld.value()/2);
     });
 
     // start/stop button
@@ -80,6 +103,7 @@ function setup() {
     drums.addPhrase(aPhrase);
     drums.addPhrase(bPhrase);
 
+    drawMatrix();
 }
 
 function beatsBtn() { // i don't remember why this is here
@@ -88,19 +112,21 @@ function beatsBtn() { // i don't remember why this is here
 
 
 function draw() { // this function gets called 60 times a second, arbitrarily
-
-    background(255,0,0); // paint background
+    
     beatsVal = numBeatsSld.value(); // tracks value of numBeats slider
     subDVal = pow(2,subDivSld.value()); // .. of subdivision
     tempoVal = tempoSld.value(); // and tempo
+
+    fill('black');
+    textSize(14);
 
     text("Number of Beats", numBeatsSld.x+30,65);
     text("Base Subdivision", subDivSld.x+30,65);
     text("Tempo ", tempoSld.x+30,165);
 
-    textSize(18);
-    text(beatsVal, numBeatsSld.x+10,65);
-    text(subDVal, subDivSld.x+10,65);
+
+    text(beatsVal, numBeatsSld.x,65);
+    text(subDVal, subDivSld.x,65);
     text(tempoVal, tempoSld.x-10,165);
 }
 
@@ -123,6 +149,12 @@ function createPatterns() {
                 aPat[i] = 0;
                 bPat[i] = 0;
             }
+        }
+
+        // trim off remaining notes from default 4/4 representation
+        while (2*beatsVal < aPat.length) {
+            aPat.pop();
+            bPat.pop();
         }
 
     } else { // if less, just eighths
@@ -210,5 +242,45 @@ function togglePlay() {
         }
     } else { // if sounds haven't loaded yet
         console.log('hold on a sec');
+    }
+}
+
+function drawMatrix() {
+    createPatterns();
+    multiplier = getMatrixDim();
+    numLinesWide = beatsVal * multiplier;
+    console.log('drawing matrix now');
+    console.log(subDVal + ' subDVal')
+    console.log('multiplier ' + multiplier);
+    console.log('numLinesWide ' + numLinesWide);
+    // background(80);
+    fill(80);
+    stroke('white');
+    rect(550, 100, 300, 60);
+    stroke('gray');
+    strokeWeight(2);
+    fill('white');
+    for (let i = 0; i <= numLinesWide; i++) {
+        line(i * matrixWidth / numLinesWide + matrixX, matrixY, i * matrixWidth / numLinesWide + matrixX, matrixY + matrixHeight);
+    }
+    for (let i = 0; i < 3; i++) {
+        line(matrixX, (i * matrixHeight / 2) + matrixY, matrixWidth + matrixX, (i * matrixHeight / 2) + matrixY);
+    }
+    console.log(numLinesWide);
+    for (let i = 0; i < numLinesWide; i++) {
+        if (aPat[i] === 1) { // may have to fix this later.... maybe not
+            ellipse((i * matrixWidth / beatsVal + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+        }
+        if (bPat[i] === 1) {
+            ellipse((i * matrixWidth / numLinesWide) + matrixX + ( 0.5 * matrixWidth / numLinesWide), matrixY + (matrixHeight/4) * 3, 15);
+        }
+    }
+}
+
+function getMatrixDim() { // one liner?
+    if (subDVal <= 4) {
+        return 2;
+    } else {
+        return 1;
     }
 }
