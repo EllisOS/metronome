@@ -20,11 +20,11 @@ let cellWidth;
 
 /**
  * OPEN TICKETS
+ * 
+ * * * make number of beats slider accurately represented when played
+ * 
  * - make sure tempo updates during session as well
  * - tempo is 2x as fast as it needs to be
- * - specify that when beatsVal is 3, every subdivision should base level counting
- * - specify models with beats val;ues divisible by 3
- * - problem with moving numBeats slider down and it not picking up
  */
 
 function setup() {
@@ -64,6 +64,7 @@ function setup() {
 
     // arbitrary
     aPhrase = new p5.Phrase('aa', function(time) {
+        console.log('i play every time')
         aa.play(time);
     }, aPat);
     bPhrase = new p5.Phrase('bb', function(time) {
@@ -109,7 +110,12 @@ function createPatterns() {
     console.log(subDVal);
     console.log(beatsVal);
 
+    // clear patterns
+    aPat = [];
+    bPat= [];
+    
     if (subDVal <= 4) { // if quarter note or longer, quarters and eights
+
 
         // Produces 4/4 >>  1-2-3-4- pattern
         for (let i = 0; i < 2*beatsVal; i++) {
@@ -129,47 +135,20 @@ function createPatterns() {
 
         console.log('eighths and above');
 
-        if (beatsVal === 3) {
-            for (let i = 0; i < beatsVal; i++) {
-                if (i === 0) {
-                    aPat[i] = 1;
-                    bPat[i] = 0;
-                } else {
-                    aPat[i] = 0;
-                    bPat[i] = 1;
-                }
-            }
-        } else if (beatsVal % 3 === 0) {
-            // Produces 4/4 >>  1-2-3-4- pattern
-            for (let i = 0; i < beatsVal; i++) {
-                if (i === 0) {
-                    aPat[i] = 1;
-                    bPat[i] = 0;
-                } else if (i % 3 == 0) {
-                    aPat[i] = 0;
-                    bPat[i] = 1;
-                } else {
-                    aPat[i] = 0;
-                    bPat[i] = 0;
-                }
-            }    
-
-        } else {
-            // produces 1-3-5-7 in 7/8
-            for (let i = 0; i < beatsVal; i++) {
-                if (i === 0) {
-                    console.log('1');
-                    aPat[i] = 1;
-                    bPat[i] = 0;
-                } else if (i % 2 == 0) {
-                    console.log('2');
-                    aPat[i] = 0;
-                    bPat[i] = 1;
-                } else {
-                    console.log('3');
-                    aPat[i] = 0;
-                    bPat[i] = 0;
-                }
+        // produces 1-3-5-7 in 7/8
+        for (let i = 0; i < beatsVal; i++) {
+            if (i === 0) {
+                console.log('1');
+                aPat[i] = 1;
+                bPat[i] = 0;
+            } else if (i % 2 == 0) {
+                console.log('2');
+                aPat[i] = 0;
+                bPat[i] = 1;
+            } else {
+                console.log('3');
+                aPat[i] = 0;
+                bPat[i] = 0;
             }
         }
 
@@ -179,7 +158,6 @@ function createPatterns() {
             bPat.pop();
         }
     }
-
 
     console.log(aPat);
     console.log(bPat);
@@ -193,11 +171,12 @@ function checkBPM() { // do we need this??
 function togglePlay() {
     // console logs settings of last played setting
     console.log(beatsVal);
-    console.log(subDVal + " subDVal");
+    console.log(subDVal);
     console.log(tempoVal);
     
     // makes sure pattern is updates
     createPatterns();
+    
     checkBPM();
 
     // makes sure sounds are loaded before trying to play drums    
