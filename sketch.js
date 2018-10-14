@@ -12,17 +12,18 @@ let bb; // second sound source
 let bPat = [];
 let bPhrase;
 let drums; // part.  attach phrase to part, transport to drive the phrase
+let sPat = [1,2,3,4,5,6,7,8]; // step index pattern - 0,1,2...
+let sPhrase;
 let bpmCTRL;
 let beatLength;
 let canvas;
-let sPat; // index pattern
 let cellWidth;
 let matrixX = 550; // default specs for matrix
 let matrixY = 100;
 let matrixWidth = 300;
 let matrixHeight = 60;
 let multiplier = 1; // used to determine the inner configuration of the matrix
-let numLinesWide = 4;
+let numLinesWide = 8;
 
 /**
  * OPEN TICKETS
@@ -33,6 +34,7 @@ let numLinesWide = 4;
  * - problem with moving numBeats slider down and it not picking up
  * - getMatrixDim() should be a one liner
  * - everytime the numBeats or subdivision slider is moved, refresh the matrix
+ * - need to update sPat every time something changes
  * 
  * ?? Tap Tempo ??
  */
@@ -55,6 +57,7 @@ function setup() {
     numBeatsSld.input(() => {
         console.log('number of beats changed to ' + numBeatsSld.value());
         beatsVal = numBeatsSld.value();
+        updateCellWidth();
         drawMatrix();
     });
 
@@ -65,6 +68,7 @@ function setup() {
     subDivSld.style('width', '160px');
     subDivSld.input(() => {
         subDVal = pow(2,subDivSld.value());
+        updateCellWidth();
         drawMatrix();
     });
 
@@ -82,6 +86,12 @@ function setup() {
     startStopBtn.position(320, 250);
     startStopBtn.style('width', '160px');
 
+    // cell width
+    cellWidth = matrixWidth/numLinesWide;
+
+    // create main drums part
+    drums = new p5.Part();
+
     // create pattterns for the high and low sounds
     createPatterns();
 
@@ -93,8 +103,7 @@ function setup() {
         bb.play(time);
     }, bPat);
     
-    // create main drums part
-    drums = new p5.Part();
+
 
     //set tempo
     drums.setBPM(tempoSld.value()/2);
@@ -102,6 +111,7 @@ function setup() {
     // add two phrases to drums part
     drums.addPhrase(aPhrase);
     drums.addPhrase(bPhrase);
+    drums.addPhrase('seq', sequence, sPat);
 
     drawMatrix();
 }
@@ -130,10 +140,20 @@ function draw() { // this function gets called 60 times a second, arbitrarily
     text(tempoVal, tempoSld.x-10,165);
 }
 
+function sequence(time, beatIndex) {
+    
+    // console.log(beatIndex);
+    drawMatrix();
+    stroke('yellow');
+    fill(255,0,0,30);
+    rect(matrixX + ((beatIndex-1)*cellWidth), matrixY, cellWidth, matrixHeight);
+
+}
+
 function createPatterns() {
 
-    console.log(subDVal);
-    console.log(beatsVal);
+    // console.log(subDVal);
+    // console.log(beatsVal);
 
     if (subDVal <= 4) { // if quarter note or longer, quarters and eights
 
@@ -159,7 +179,7 @@ function createPatterns() {
 
     } else { // if less, just eighths
 
-        console.log('eighths and above');
+        // console.log('eighths and above');
 
         if (beatsVal === 3) {
             for (let i = 0; i < beatsVal; i++) {
@@ -190,15 +210,15 @@ function createPatterns() {
             // produces 1-3-5-7 in 7/8
             for (let i = 0; i < beatsVal; i++) {
                 if (i === 0) {
-                    console.log('1');
+                    // console.log('1');
                     aPat[i] = 1;
                     bPat[i] = 0;
                 } else if (i % 2 == 0) {
-                    console.log('2');
+                    // console.log('2');
                     aPat[i] = 0;
                     bPat[i] = 1;
                 } else {
-                    console.log('3');
+                    // console.log('3');
                     aPat[i] = 0;
                     bPat[i] = 0;
                 }
@@ -212,9 +232,35 @@ function createPatterns() {
         }
     }
 
+    // make sPat - step index
+    let tempMult = beatsVal*getMatrixDim();
+    console.log(tempMult + " tempMult with beatsVall" + beatsVal);
+    sPat = [];
+    for (let i = 0; i < tempMult; i++) {
+       
+        sPat[i] = i + 1;
+        console.log(sPat[i]);
 
-    console.log(aPat);
-    console.log(bPat);
+    }
+    console.log(drums);
+    drums.replaceSequence('seq', sPat);
+    // console.log('sPat created')
+    // drums.removePhrase('seq');
+    // drums.addPhrase('seq', sequence, sPat);
+    // console.log(this)
+    // console.log('phrase removed and added')
+
+
+    // console.log(aPat);
+    // console.log(bPat);
+    // console.log(sPat);
+}
+
+function updateCellWidth() {
+    console.log('before values width and lines wide - ' + matrixWidth + " , " + numLinesWide);
+
+    cellWidth = matrixWidth/numLinesWide;
+    console.log(cellWidth);
 }
 
 function checkBPM() { // do we need this??
@@ -224,9 +270,10 @@ function checkBPM() { // do we need this??
 
 function togglePlay() {
     // console logs settings of last played setting
-    console.log(beatsVal);
-    console.log(subDVal + " subDVal");
-    console.log(tempoVal);
+    // console.log(beatsVal);
+    // console.log(subDVal + " subDVal");
+    // console.log(tempoVal);
+    updateCellWidth();
     
     // makes sure pattern is updates
     createPatterns();
@@ -249,9 +296,9 @@ function drawMatrix() {
     createPatterns();
     multiplier = getMatrixDim();
     numLinesWide = beatsVal * multiplier;
-    console.log('drawing matrix now');
-    console.log(subDVal + ' subDVal')
-    console.log('multiplier ' + multiplier);
+    // console.log('drawing matrix now');
+    // console.log(subDVal + ' subDVal')
+    // console.log('multiplier ' + multiplier);
     console.log('numLinesWide ' + numLinesWide);
     // background(80);
     fill(80);
@@ -261,12 +308,13 @@ function drawMatrix() {
     strokeWeight(2);
     fill('white');
     for (let i = 0; i <= numLinesWide; i++) {
+        console.log('first loop, count ' + i);
         line(i * matrixWidth / numLinesWide + matrixX, matrixY, i * matrixWidth / numLinesWide + matrixX, matrixY + matrixHeight);
     }
     for (let i = 0; i < 3; i++) {
         line(matrixX, (i * matrixHeight / 2) + matrixY, matrixWidth + matrixX, (i * matrixHeight / 2) + matrixY);
     }
-    console.log(numLinesWide);
+    // console.log(numLinesWide);
     for (let i = 0; i < numLinesWide; i++) {
         if (aPat[i] === 1) { // may have to fix this later.... maybe not
             ellipse((i * matrixWidth / beatsVal + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
