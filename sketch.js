@@ -27,14 +27,7 @@ let numLinesWide = 8;
 
 /**
  * OPEN TICKETS
- * - make sure tempo updates during session as well
- * - tempo is 2x as fast as it needs to be
- * - specify that when beatsVal is 3, every subdivision should base level counting
- * - specify models with beats val;ues divisible by 3
- * - problem with moving numBeats slider down and it not picking up
  * - getMatrixDim() should be a one liner
- * - everytime the numBeats or subdivision slider is moved, refresh the matrix
- * - need to update sPat every time something changes
  * 
  * ?? Tap Tempo ??
  */
@@ -113,6 +106,7 @@ function setup() {
     drums.addPhrase(bPhrase);
     drums.addPhrase('seq', sequence, sPat);
 
+    // draw the matrix
     drawMatrix();
 }
 
@@ -152,6 +146,7 @@ function sequence(time, beatIndex) {
 
 function createPatterns() {
 
+    console.log('create patterns');
     // console.log(subDVal);
     // console.log(beatsVal);
 
@@ -234,15 +229,15 @@ function createPatterns() {
 
     // make sPat - step index
     let tempMult = beatsVal*getMatrixDim();
-    console.log(tempMult + " tempMult with beatsVall" + beatsVal);
+    // console.log(tempMult + " tempMult with beatsVall" + beatsVal);
     sPat = [];
     for (let i = 0; i < tempMult; i++) {
        
         sPat[i] = i + 1;
-        console.log(sPat[i]);
+        // console.log(sPat[i]);
 
     }
-    console.log(drums);
+    // console.log(drums);
     drums.replaceSequence('seq', sPat);
     // console.log('sPat created')
     // drums.removePhrase('seq');
@@ -257,10 +252,10 @@ function createPatterns() {
 }
 
 function updateCellWidth() {
-    console.log('before values width and lines wide - ' + matrixWidth + " , " + numLinesWide);
+    // console.log('before values width and lines wide - ' + matrixWidth + " , " + numLinesWide);
 
     cellWidth = matrixWidth/numLinesWide;
-    console.log(cellWidth);
+    // console.log(cellWidth);
 }
 
 function checkBPM() { // do we need this??
@@ -274,9 +269,11 @@ function togglePlay() {
     // console.log(subDVal + " subDVal");
     // console.log(tempoVal);
     updateCellWidth();
+
+    // need to know whether to checkPatterns here
     
     // makes sure pattern is updates
-    createPatterns();
+    // createPatterns();
     checkBPM();
 
     // makes sure sounds are loaded before trying to play drums    
@@ -292,6 +289,22 @@ function togglePlay() {
     }
 }
 
+// when the user alters aPat or bPat, update phrase(?!)
+function updatePatterns() {
+
+    drums.replaceSequence('aa', aPat);
+    drums.replaceSequence('bb', bPat);
+
+    console.log('sequences repalced');
+
+
+
+
+
+
+
+}
+
 function drawMatrix() {
     createPatterns();
     multiplier = getMatrixDim();
@@ -299,16 +312,17 @@ function drawMatrix() {
     // console.log('drawing matrix now');
     // console.log(subDVal + ' subDVal')
     // console.log('multiplier ' + multiplier);
-    console.log('numLinesWide ' + numLinesWide);
+    // console.log('numLinesWide ' + numLinesWide);
     // background(80);
     fill(80);
     stroke('white');
     rect(550, 100, 300, 60);
+
     stroke('gray');
     strokeWeight(2);
     fill('white');
     for (let i = 0; i <= numLinesWide; i++) {
-        console.log('first loop, count ' + i);
+        // console.log('first loop, count ' + i);
         line(i * matrixWidth / numLinesWide + matrixX, matrixY, i * matrixWidth / numLinesWide + matrixX, matrixY + matrixHeight);
     }
     for (let i = 0; i < 3; i++) {
@@ -331,4 +345,40 @@ function getMatrixDim() { // one liner?
     } else {
         return 1;
     }
+}
+
+function mousePressed(event) {
+    // console.log(event.offsetX);
+    // console.log(event.offsetY);
+
+    // console.log(aPat);
+    // console.log(bPat);
+
+    let colClicked = Math.floor((event.offsetX - matrixX) / (matrixWidth/numLinesWide));
+    let rowClicked = Math.floor((event.offsetY - matrixY) / (matrixHeight/2));
+
+    // console.log(colClicked);
+    // console.log(rowClicked);
+    if ((rowClicked >= 0 && rowClicked < 2) && (colClicked >= 0 && colClicked < numLinesWide)) {
+        console.log('canvas clicked');
+    }
+
+    // change the values of aPat and bPat based on clicks
+    if (rowClicked === 0) {
+        console.log('first row');
+        aPat[colClicked] = aPat[colClicked] === 0 ? 1 : 0;
+        console.log(aPat);
+        
+        // update phrase
+        updatePatterns();
+    } else if (rowClicked === 1) {
+        console.log('second row');
+        bPat[colClicked] = bPat[colClicked] === 0 ? 1 : 0;
+        console.log(bPat);
+        // update phrase
+        updatePatterns();
+    } else {
+        console.log('click off of matrix');
+    }
+
 }
