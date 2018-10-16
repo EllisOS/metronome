@@ -2,6 +2,7 @@ let numBeatsSld; // number of beats slider
 let subDivSld; // subdivision slider
 let tempoSld; // tempo slider
 let startStopBtn; // start/stop button
+let resetBtn; // reset button
 let beatsVal = 4; // defaults... 4/4 @ 120
 let subDVal = 4;
 let tempoVal = 60;
@@ -24,8 +25,6 @@ let matrixWidth = 300;
 let matrixHeight = 60;
 let multiplier = 1; // used to determine the inner configuration of the matrix
 let numLinesWide = 8;
-let compareMatrixA;
-let compareMatrixB;
 
 /**
  * OPEN TICKETS
@@ -83,7 +82,12 @@ function setup() {
     startStopBtn = createButton('Start/Stop');
     startStopBtn.mousePressed(togglePlay);
     startStopBtn.position(320, 250);
-    startStopBtn.style('width', '160px');
+    startStopBtn.style('width', '80px');
+
+    // reset button
+    resetBtn = createButton('Reset');
+    resetBtn.mousePressed(resetMatrix);
+    resetBtn.position(420, 250);
 
     // cell width
     cellWidth = matrixWidth/numLinesWide;
@@ -245,16 +249,6 @@ function createPatterns() {
     }
     // console.log(drums);
     drums.replaceSequence('seq', sPat);
-    // console.log('sPat created')
-    // drums.removePhrase('seq');
-    // drums.addPhrase('seq', sequence, sPat);
-    // console.log(this)
-    // console.log('phrase removed and added')
-
-
-    // console.log(aPat);
-    // console.log(bPat);
-    // console.log(sPat);
 }
 
 function updateCellWidth() {
@@ -267,6 +261,11 @@ function updateCellWidth() {
 function checkBPM() { // do we need this??
     console.log('checking BPM');
 
+}
+
+function resetMatrix() { // why doesn't this work??
+    console.log('resetting matrix');
+    console.log('hello');
 }
 
 function togglePlay() {
@@ -335,7 +334,7 @@ function drawMatrix() {
     // console.log(numLinesWide);
     for (let i = 0; i < numLinesWide; i++) {
         if (aPat[i] === 1) { // may have to fix this later.... maybe not
-            ellipse((i * matrixWidth / (beatsVal*multiplier) + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+            ellipse((i * matrixWidth / (numLinesWide) + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
         }
         if (bPat[i] === 1) {
             ellipse((i * matrixWidth / numLinesWide) + matrixX + ( 0.5 * matrixWidth / numLinesWide), matrixY + (matrixHeight/4) * 3, 15);
@@ -352,19 +351,24 @@ function getMatrixDim() { // one liner?
 }
 
 function mousePressed(event) {
-    // console.log(event.offsetX);
-    // console.log(event.offsetY);
-
     // console.log(aPat);
     // console.log(bPat);
+
+    console.log(event.srcElement.innerHTML);
+
+    // mouse press event for matrix reset - can I put this in a function? why doesn't it work?
+    if (event.srcElement.innerHTML === 'Reset') {
+       createPatterns();
+       drawMatrix();
+    }
 
     let colClicked = Math.floor((event.offsetX - matrixX) / (matrixWidth/numLinesWide));
     let rowClicked = Math.floor((event.offsetY - matrixY) / (matrixHeight/2));
 
-    console.log(colClicked);
-    console.log(rowClicked);
+    // console.log(colClicked);
+    // console.log(rowClicked);
     if ((rowClicked >= 0 && rowClicked < 2) && (colClicked >= 0 && colClicked < numLinesWide)) {
-        console.log('canvas clicked');
+        console.log('matrix clicked');
     }
 
     // change the values of aPat and bPat based on clicks
@@ -388,3 +392,5 @@ function mousePressed(event) {
     }
 
 }
+
+
