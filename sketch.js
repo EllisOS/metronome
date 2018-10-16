@@ -3,6 +3,7 @@ let subDivSld; // subdivision slider
 let tempoSld; // tempo slider
 let startStopBtn; // start/stop button
 let resetBtn; // reset button
+let recordBtn; // record button
 let beatsVal = 4; // defaults... 4/4 @ 120
 let subDVal = 4;
 let tempoVal = 60;
@@ -25,10 +26,17 @@ let matrixWidth = 300;
 let matrixHeight = 60;
 let multiplier = 1; // used to determine the inner configuration of the matrix
 let numLinesWide = 8;
+let masterPatA = [];
+let masterPatB = [];
 
 /**
  * OPEN TICKETS
  * - getMatrixDim() should be a one liner
+ * - write exportMeasure to handle 16ths and half notes
+ * - the base subdivision of masterPatA&B must be 32nd notes
+ * - subsequently, the tempo of play must some X multiples of 2 to compensate
+ * 
+ * - record button also to produce square of data - numBeats & subD
  * 
  * ?? Tap Tempo ??
  */
@@ -39,6 +47,12 @@ function setup() {
     createCanvas(width, height);
 
     background(255,0,0); // paint background
+
+    // Title Text - make async somehow?
+    textSize(30);
+    stroke('gray');
+    textFont('Righteous');
+    text('Multi-meter Sequencer', 200, 30);
 
     // sound sources
     aa = loadSound('./assets/first_sound.wav', function() {});
@@ -81,8 +95,13 @@ function setup() {
     // start/stop button
     startStopBtn = createButton('Start/Stop');
     startStopBtn.mousePressed(togglePlay);
-    startStopBtn.position(320, 250);
+    startStopBtn.position(320, 210);
     startStopBtn.style('width', '80px');
+
+    // record button
+    recordBtn = createButton('Record');
+    recordBtn.mousePressed(exportMeasure);
+    recordBtn.position(320, 250);
 
     // reset button
     resetBtn = createButton('Reset');
@@ -118,12 +137,60 @@ function setup() {
 
     // draw the matrix
     drawMatrix();
+
+    // draw a line to demarcate upper/lower levels
+    stroke('gray');
+    line(100, 250, 900, 250);
+
+    // lower sequencer section --------------------------------------------------
+    // text
+    fill('black');
+    text('Measure Sequencing', 200, 300);    
+    
+    // buttons
+    playBtnB = createButton('Play/Pause');
+    playBtnB.position(125+100, 410);
+
+    stopBtnB = createButton('Stop');
+    stopBtnB.position(235+100, 410);
+
+    resetBtnB = createButton('Reset');
+    resetBtnB.position(305+100, 410);
+
+    tempoSldB = createSlider('Tempo');
+    tempoSldB.position(500, 410);
+    // tempo label - needs cleanup/mods
+    textSize(16);
+    stroke(1);
+    text('Tempo', 520, 325);
 }
 
 function beatsBtn() { // i don't remember why this is here
     console.log('okay ' + this.value());
 }
 
+function exportMeasure() {
+    console.log('exporting measure');
+    const mpLength = masterPatA.length; // master pattern length
+    const mpPlusLength = aPat.length+masterPatA.length; // master plus current measure length
+    console.log([[...masterPatA], [...masterPatB]]);
+    for (let i = mpLength; i < mpPlusLength; i++) {
+        if (aPat[i-mpLength] === 1 && bPat[i-mpLength] === 1) {
+            masterPatA[i] = 1;
+            masterPatB[i] = 1;
+        } else if (aPat[i-mpLength] === 1) {
+            masterPatA[i] = 1;
+            masterPatB[i] = 0;
+        } else if (bPat[i-mpLength] === 1) {
+            masterPatA[i] = 0;
+            masterPatB[i] = 1;
+        } else {
+            masterPatA[i] = 0;
+            masterPatB[i] = 0;
+        }
+    }
+    console.log([[...masterPatA], [...masterPatB]]);
+}
 
 function draw() { // this function gets called 60 times a second, arbitrarily
     
@@ -281,8 +348,6 @@ function togglePlay() {
     // createPatterns();
     checkBPM();
 
-    console.log(aPat);
-
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
@@ -354,7 +419,7 @@ function mousePressed(event) {
     // console.log(aPat);
     // console.log(bPat);
 
-    console.log(event.srcElement.innerHTML);
+    // console.log(event.srcElement.innerHTML);
 
     // mouse press event for matrix reset - can I put this in a function? why doesn't it work?
     if (event.srcElement.innerHTML === 'Reset') {
