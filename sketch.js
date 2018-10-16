@@ -35,8 +35,9 @@ let masterPatB = [];
  * - write exportMeasure to handle 16ths and half notes
  * - the base subdivision of masterPatA&B must be 32nd notes
  * - subsequently, the tempo of play must some X multiples of 2 to compensate
- * 
+ * - alignment wrong on top row on the 7/8-16-32 matrix
  * - record button also to produce square of data - numBeats & subD
+ * 
  * 
  * ?? Tap Tempo ??
  */
@@ -51,6 +52,7 @@ function setup() {
     // Title Text - make async somehow?
     textSize(30);
     stroke('gray');
+    fill('white');
     textFont('Righteous');
     text('Multi-meter Sequencer', 200, 30);
 
@@ -65,6 +67,9 @@ function setup() {
     numBeatsSld.input(() => {
         console.log('number of beats changed to ' + numBeatsSld.value());
         beatsVal = numBeatsSld.value();
+        fill('red');
+        stroke('red');
+        rect(numBeatsSld.x, 48, 30, 20);
         updateCellWidth();
         createPatterns();
         drawMatrix();
@@ -78,6 +83,9 @@ function setup() {
     subDivSld.style('width', '160px');
     subDivSld.input(() => {
         subDVal = pow(2,subDivSld.value());
+        fill('red');
+        stroke('red');
+        rect(subDivSld.x, 48, 30, 20);
         updateCellWidth();
         createPatterns();
         drawMatrix();
@@ -89,6 +97,11 @@ function setup() {
     tempoSld.position(100, 250);
     tempoSld.style('width', '160px');
     tempoSld.input(() => {
+        fill('red');
+        rect(tempoSld.x-8, tempoSld.y-100, 38, 20);
+        fill('white');
+        textSize(20);
+        text(tempoSld.value(), tempoSld.x-8, tempoSld.y-84);
         drums.setBPM(tempoSld.value()/2);
     });
 
@@ -125,8 +138,6 @@ function setup() {
         bb.play(time);
     }, bPat);
     
-
-
     //set tempo
     drums.setBPM(tempoSld.value()/2);
 
@@ -142,10 +153,20 @@ function setup() {
     stroke('gray');
     line(100, 250, 900, 250);
 
+    textSize(20);
+    strokeWeight(0);
+    text("Number of Beats", numBeatsSld.x+30,65);
+    text("Base Subdivision", subDivSld.x+30,65);
+    text("Tempo ", tempoSld.x+30,165);
+    fill('white');
+    stroke('black');
+    text(tempoVal*2, tempoSld.x-5,165);
+
     // lower sequencer section --------------------------------------------------
     // text
-    fill('black');
-    text('Measure Sequencing', 200, 300);    
+    fill('white');
+    textSize(30);
+    text('Measure Sequencing', 150, 300);    
     
     // buttons
     playBtnB = createButton('Play/Pause');
@@ -162,7 +183,7 @@ function setup() {
     // tempo label - needs cleanup/mods
     textSize(16);
     stroke(1);
-    text('Tempo', 520, 325);
+    text('Tempo', 495, 320);
 }
 
 function beatsBtn() { // i don't remember why this is here
@@ -198,17 +219,11 @@ function draw() { // this function gets called 60 times a second, arbitrarily
     subDVal = pow(2,subDivSld.value()); // .. of subdivision
     tempoVal = tempoSld.value(); // and tempo
 
-    fill('black');
-    textSize(14);
+    textSize(18);
+    fill('white');
+    text(beatsVal, numBeatsSld.x+5,65);
+    text(subDVal, subDivSld.x+5,65);
 
-    text("Number of Beats", numBeatsSld.x+30,65);
-    text("Base Subdivision", subDivSld.x+30,65);
-    text("Tempo ", tempoSld.x+30,165);
-
-
-    text(beatsVal, numBeatsSld.x,65);
-    text(subDVal, subDivSld.x,65);
-    text(tempoVal, tempoSld.x-10,165);
 }
 
 function sequence(time, beatIndex) {
