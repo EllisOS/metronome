@@ -24,6 +24,8 @@ let matrixWidth = 300;
 let matrixHeight = 60;
 let multiplier = 1; // used to determine the inner configuration of the matrix
 let numLinesWide = 8;
+let compareMatrixA;
+let compareMatrixB;
 
 /**
  * OPEN TICKETS
@@ -51,7 +53,9 @@ function setup() {
         console.log('number of beats changed to ' + numBeatsSld.value());
         beatsVal = numBeatsSld.value();
         updateCellWidth();
+        createPatterns();
         drawMatrix();
+
     });
 
     // subdivision slider
@@ -62,7 +66,9 @@ function setup() {
     subDivSld.input(() => {
         subDVal = pow(2,subDivSld.value());
         updateCellWidth();
+        createPatterns();
         drawMatrix();
+
     });
 
     // tempo slider
@@ -276,9 +282,13 @@ function togglePlay() {
     // createPatterns();
     checkBPM();
 
+    console.log(aPat);
+
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
+            console.log('starting loop');
+            console.log(aPat);
             drums.metro.metroTicks = 0; // reset loop to start 
             drums.loop();
         } else {
@@ -295,18 +305,12 @@ function updatePatterns() {
     drums.replaceSequence('aa', aPat);
     drums.replaceSequence('bb', bPat);
 
-    console.log('sequences repalced');
-
-
-
-
-
-
+    console.log('sequences replaced');
 
 }
 
 function drawMatrix() {
-    createPatterns();
+    // createPatterns(); // turning this off helps matrix interactivity
     multiplier = getMatrixDim();
     numLinesWide = beatsVal * multiplier;
     // console.log('drawing matrix now');
@@ -331,7 +335,7 @@ function drawMatrix() {
     // console.log(numLinesWide);
     for (let i = 0; i < numLinesWide; i++) {
         if (aPat[i] === 1) { // may have to fix this later.... maybe not
-            ellipse((i * matrixWidth / beatsVal + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+            ellipse((i * matrixWidth / (beatsVal*multiplier) + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
         }
         if (bPat[i] === 1) {
             ellipse((i * matrixWidth / numLinesWide) + matrixX + ( 0.5 * matrixWidth / numLinesWide), matrixY + (matrixHeight/4) * 3, 15);
@@ -357,8 +361,8 @@ function mousePressed(event) {
     let colClicked = Math.floor((event.offsetX - matrixX) / (matrixWidth/numLinesWide));
     let rowClicked = Math.floor((event.offsetY - matrixY) / (matrixHeight/2));
 
-    // console.log(colClicked);
-    // console.log(rowClicked);
+    console.log(colClicked);
+    console.log(rowClicked);
     if ((rowClicked >= 0 && rowClicked < 2) && (colClicked >= 0 && colClicked < numLinesWide)) {
         console.log('canvas clicked');
     }
@@ -371,12 +375,14 @@ function mousePressed(event) {
         
         // update phrase
         updatePatterns();
+        drawMatrix();
     } else if (rowClicked === 1) {
         console.log('second row');
         bPat[colClicked] = bPat[colClicked] === 0 ? 1 : 0;
         console.log(bPat);
         // update phrase
         updatePatterns();
+        drawMatrix();
     } else {
         console.log('click off of matrix');
     }
