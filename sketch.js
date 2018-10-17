@@ -28,6 +28,13 @@ let multiplier = 1; // used to determine the inner configuration of the matrix
 let numLinesWide = 8;
 let masterPatA = [];
 let masterPatB = [];
+let cc; // first sound source
+let dd; // second sound source
+let playBtnB; // buttons/slider for Measure Sequencing
+let stopBtnB;
+let resetBtnB;
+let tempoSldB;
+let leftSqBorder = 150; // starting point for measures
 
 /**
  * OPEN TICKETS
@@ -37,7 +44,8 @@ let masterPatB = [];
  * - subsequently, the tempo of play must some X multiples of 2 to compensate
  * - alignment wrong on top row on the 7/8-16-32 matrix
  * - record button also to produce square of data - numBeats & subD
- * 
+ * - get the beat visualization to map with measure sequencing
+ * - top part needs stop button?
  * 
  * ?? Tap Tempo ??
  */
@@ -59,6 +67,9 @@ function setup() {
     // sound sources
     aa = loadSound('./assets/first_sound.wav', function() {});
     bb = loadSound('./assets/second_sound.wav', function() {});
+    cc = loadSound('./assets/first_sound.wav', function() {});
+    dd = loadSound('./assets/second_sound.wav', function() {});
+
 
     // number of beats slider
     numBeatsSld = createSlider(1, 20, 4);
@@ -98,6 +109,7 @@ function setup() {
     tempoSld.style('width', '160px');
     tempoSld.input(() => {
         fill('red');
+        stroke('red');
         rect(tempoSld.x-8, tempoSld.y-100, 38, 20);
         fill('white');
         textSize(20);
@@ -121,6 +133,33 @@ function setup() {
     resetBtn.mousePressed(resetMatrix);
     resetBtn.position(420, 250);
 
+    // lower sequencer section --------------------------------------------------
+    // text
+    fill('white');
+    textSize(30);
+    text('Measure Sequencing', 150, 300);    
+    
+    // buttons
+    playBtnB = createButton('Play/Pause');
+    playBtnB.position(125+100, 410);
+    playBtnB.mousePressed(playMSBtn);
+
+    stopBtnB = createButton('Stop');
+    stopBtnB.position(235+100, 410);
+    stopBtnB.mousePressed(stopMSBtn);
+
+    resetBtnB = createButton('Reset');
+    resetBtnB.position(305+100, 410);
+    resetBtnB.mousePressed(resetMSBtn);
+
+    tempoSldB = createSlider(30,300,tempoSld.value());
+    tempoSldB.position(500, 410);
+
+    // tempo label - needs cleanup/mods
+    textSize(16);
+    stroke(1);
+    text('Tempo', 495, 320);
+
     // cell width
     cellWidth = matrixWidth/numLinesWide;
 
@@ -130,13 +169,19 @@ function setup() {
     // create pattterns for the high and low sounds
     createPatterns();
 
-    // arbitrary
+    // arbitrary phrase setups
     aPhrase = new p5.Phrase('aa', function(time) {
         aa.play(time);
     }, aPat);
     bPhrase = new p5.Phrase('bb', function(time) {
         bb.play(time);
     }, bPat);
+    cPhrase = new p5.Phrase('cc', function(time) {
+        cc.play(time);
+    });
+    dPhrase = new p5.Phrase('dd', function(time) {
+        dd.play(time);
+    })
     
     //set tempo
     drums.setBPM(tempoSld.value()/2);
@@ -161,33 +206,47 @@ function setup() {
     fill('white');
     stroke('black');
     text(tempoVal*2, tempoSld.x-5,165);
-
-    // lower sequencer section --------------------------------------------------
-    // text
-    fill('white');
-    textSize(30);
-    text('Measure Sequencing', 150, 300);    
-    
-    // buttons
-    playBtnB = createButton('Play/Pause');
-    playBtnB.position(125+100, 410);
-
-    stopBtnB = createButton('Stop');
-    stopBtnB.position(235+100, 410);
-
-    resetBtnB = createButton('Reset');
-    resetBtnB.position(305+100, 410);
-
-    tempoSldB = createSlider('Tempo');
-    tempoSldB.position(500, 410);
-    // tempo label - needs cleanup/mods
-    textSize(16);
-    stroke(1);
-    text('Tempo', 495, 320);
 }
 
 function beatsBtn() { // i don't remember why this is here
     console.log('okay ' + this.value());
+}
+
+function playMSBtn() {
+    drums.replaceSequence('aa', masterPatA);
+    drums.replaceSequence('bb', masterPatB);
+
+    console.log('sequences replaced');
+
+    // makes sure sounds are loaded before trying to play drums    
+    if (aa.isLoaded() && bb.isLoaded()) {
+        if (!drums.isPlaying) {
+            console.log('starting loop');
+            console.log(masterPatA);
+            console.log(masterPatB);
+            // drums.metro.metroTicks = 0; // reset loop to start 
+            drums.loop();
+        } else {
+            drums.stop(); // works like a pause button
+            drums.replaceSequence('aa', aPat);
+            drums.replaceSequence('bb', bPat);
+        }
+    } else { // if sounds haven't loaded yet
+        console.log('hold on a sec');
+    }
+    
+}
+
+function stopMSBtn() {
+    drums.replaceSequence('aa', aPat);
+    drums.replaceSequence('bb', bPat);
+    drums.metro.metroTicks = 0; // reset loop to start
+    console.log('sequences replaced, loop restarted');
+}
+
+function resetMSBtn() {
+    masterPatA = [];
+    masterPatB = [];
 }
 
 function exportMeasure() {
