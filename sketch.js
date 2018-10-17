@@ -35,6 +35,10 @@ let stopBtnB;
 let resetBtnB;
 let tempoSldB;
 let leftSqBorder = 150; // starting point for measures
+let topSqBorder = 400;
+let measureIndex = 0; // index of measures in masterPat
+let patIndex; // index variable used in exporting measures to sequencer
+let innerPatIndex;
 
 /**
  * OPEN TICKETS
@@ -46,8 +50,13 @@ let leftSqBorder = 150; // starting point for measures
  * - record button also to produce square of data - numBeats & subD
  * - get the beat visualization to map with measure sequencing
  * - top part needs stop button?
+ * - make lower tempo slider work
+ * - clean matrix display on odd number of beats
+ * - make placeholders for the squares in measure sequencing
+ * !!! fix sixteenth and 32nd note exports !!!
  * 
  * ?? Tap Tempo ??
+ * ?? eliminate user ability to choose whole notes as a subdivision ??
  */
 
 function setup() {
@@ -125,7 +134,36 @@ function setup() {
 
     // record button
     recordBtn = createButton('Record');
-    recordBtn.mousePressed(exportMeasure);
+    recordBtn.mousePressed(() => {
+        
+        if (measureIndex % 8 === 0 && measureIndex != 0) {
+            topSqBorder += 60;
+            leftSqBorder = 150;
+            measureIndex = 0;
+            fill('orange');
+            rect(leftSqBorder+(60*measureIndex), topSqBorder, 50, 50);
+            fill('black');
+            strokeWeight(2);
+            line(leftSqBorder+(60*measureIndex)+7, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
+            strokeWeight(1);
+            textSize(24);
+            text(numBeatsSld.value(), leftSqBorder+(60*measureIndex)+7, topSqBorder+24);
+            text(pow(2,subDivSld.value()), leftSqBorder+(60*measureIndex)+30, topSqBorder+42);
+        } else {
+            fill('orange');
+            rect(leftSqBorder+(60*measureIndex), topSqBorder, 50, 50);
+            fill('black');
+            strokeWeight(2);
+            line(leftSqBorder+(60*measureIndex)+7, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
+            strokeWeight(1);
+            textSize(24);
+            text(numBeatsSld.value(), leftSqBorder+(60*measureIndex)+7, topSqBorder+24);
+            text(pow(2,subDivSld.value()), leftSqBorder+(60*measureIndex)+30, topSqBorder+42);
+        }
+        
+        measureIndex++;
+        exportMeasure();
+    });
     recordBtn.position(320, 250);
 
     // reset button
@@ -158,7 +196,7 @@ function setup() {
     // tempo label - needs cleanup/mods
     textSize(16);
     stroke(1);
-    text('Tempo', 495, 320);
+    text('Relative Tempo', 495, 320);
 
     // cell width
     cellWidth = matrixWidth/numLinesWide;
@@ -203,6 +241,9 @@ function setup() {
     text("Number of Beats", numBeatsSld.x+30,65);
     text("Base Subdivision", subDivSld.x+30,65);
     text("Tempo ", tempoSld.x+30,165);
+    textSize(8);
+    text('beats per subdivison',tempoSld.x+98,165);
+    textSize(20);
     fill('white');
     stroke('black');
     text(tempoVal*2, tempoSld.x-5,165);
@@ -217,6 +258,7 @@ function playMSBtn() {
     drums.replaceSequence('bb', masterPatB);
 
     console.log('sequences replaced');
+    drums.setBPM(2*tempoSld.value());
 
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
@@ -224,10 +266,11 @@ function playMSBtn() {
             console.log('starting loop');
             console.log(masterPatA);
             console.log(masterPatB);
-            // drums.metro.metroTicks = 0; // reset loop to start 
+            drums.metro.metroTicks = 0; // reset loop to start 
             drums.loop();
         } else {
             drums.stop(); // works like a pause button
+            drums.setBPM(tempoSld.value());
             drums.replaceSequence('aa', aPat);
             drums.replaceSequence('bb', bPat);
         }
@@ -238,15 +281,28 @@ function playMSBtn() {
 }
 
 function stopMSBtn() {
+    drums.stop();
+    drums.setBPM(tempoSld.value());
+    drums.metro.metroTicks = 0; // reset loop to start
     drums.replaceSequence('aa', aPat);
     drums.replaceSequence('bb', bPat);
-    drums.metro.metroTicks = 0; // reset loop to start
     console.log('sequences replaced, loop restarted');
 }
 
 function resetMSBtn() {
+    drums.stop();
+    drums.setBPM(tempoSld.value());
+    // reset appropriate variables
     masterPatA = [];
     masterPatB = [];
+    measureIndex = 0;
+    topSqBorder = 400;
+    leftSqBorder = 150;
+
+    // erase squares with rect
+    fill('red');
+    stroke('red');
+    rect(100, 380, 650, 650);
 }
 
 function exportMeasure() {
@@ -254,22 +310,171 @@ function exportMeasure() {
     const mpLength = masterPatA.length; // master pattern length
     const mpPlusLength = aPat.length+masterPatA.length; // master plus current measure length
     console.log([[...masterPatA], [...masterPatB]]);
-    for (let i = mpLength; i < mpPlusLength; i++) {
-        if (aPat[i-mpLength] === 1 && bPat[i-mpLength] === 1) {
-            masterPatA[i] = 1;
-            masterPatB[i] = 1;
-        } else if (aPat[i-mpLength] === 1) {
-            masterPatA[i] = 1;
-            masterPatB[i] = 0;
-        } else if (bPat[i-mpLength] === 1) {
-            masterPatA[i] = 0;
-            masterPatB[i] = 1;
-        } else {
-            masterPatA[i] = 0;
-            masterPatB[i] = 0;
+    // for (let i = mpLength; i < mpPlusLength; i++) {
+    //     if (aPat[i-mpLength] === 1 && bPat[i-mpLength] === 1) {
+    //         masterPatA[i] = 1;
+    //         masterPatB[i] = 1;
+    //     } else if (aPat[i-mpLength] === 1) {
+    //         masterPatA[i] = 1;
+    //         masterPatB[i] = 0;
+    //     } else if (bPat[i-mpLength] === 1) {
+    //         masterPatA[i] = 0;
+    //         masterPatB[i] = 1;
+    //     } else {
+    //         masterPatA[i] = 0;
+    //         masterPatB[i] = 0;
+    //     }
+    // }
+
+    // making everything 32nd note based
+    if (pow(2,subDivSld.value()) === 1) { // whole notes
+        console.log('whole notes');
+    } else if (pow(2,subDivSld.value()) === 2) { // half notes
+        console.log('half notes');
+        patIndex = 0;
+        innerPatIndex = 0;
+        console.log(bPat);
+        for (let i = mpLength; i < (8*numLinesWide)+mpLength; i++) {
+            if (patIndex % 8 === 0) {
+                if (aPat[(patIndex%4)+innerPatIndex] === 1 && bPat[(patIndex%4)+innerPatIndex] === 1) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 1;
+                    innerPatIndex++;
+                } else if (aPat[(patIndex%4)+innerPatIndex] === 1 && bPat[(patIndex%4)+innerPatIndex] === 0) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 0;
+                    innerPatIndex++;
+                } else if (aPat[(patIndex%4)+innerPatIndex] === 0 && bPat[(patIndex%4)+innerPatIndex] === 1) {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 1;
+                    innerPatIndex++;
+                } else {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 0;
+                    innerPatIndex++;
+                }
+
+            } else {
+                masterPatA[i] = 0;
+                masterPatB[i] = 0;
+            }
+            patIndex++;
         }
+
+    } else if (pow(2,subDivSld.value()) === 4) { // quarter notes
+        console.log('quarter notes');
+
+        patIndex = 0;
+        innerPatIndex = 0;
+
+        for (let i = mpLength; i < (4*numLinesWide)+mpLength; i++) {
+
+            if (patIndex % 4 === 0) {
+                if (aPat[(patIndex%2)+innerPatIndex] === 1 && bPat[(patIndex%2)+innerPatIndex] === 1) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 1;
+                } else if (aPat[(patIndex%2)+innerPatIndex] === 1 && bPat[(patIndex%2)+innerPatIndex] === 0) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 0;
+                } else if (aPat[(patIndex%2)+innerPatIndex] === 0 && bPat[(patIndex%2)+innerPatIndex] === 1) {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 1;
+                } else {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 0;
+                }
+                innerPatIndex++;
+            } else {
+                masterPatA[i] = 0;
+                masterPatB[i] = 0;
+            }
+            patIndex++;
+        }
+
+    } else if (pow(2,subDivSld.value()) === 8) { // eighth notes
+        console.log('eighth notes');
+
+        patIndex = 0;
+        innerPatIndex = 0;
+
+        for (let i = mpLength; i < (4*numLinesWide)+mpLength; i++) {
+
+            if (patIndex % 4 === 0) {
+                if (aPat[(patIndex%2)+innerPatIndex] === 1 && bPat[(patIndex%2)+innerPatIndex] === 1) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 1;
+                } else if (aPat[(patIndex%2)+innerPatIndex] === 1 && bPat[(patIndex%2)+innerPatIndex] === 0) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 0;
+                } else if (aPat[(patIndex%2)+innerPatIndex] === 0 && bPat[(patIndex%2)+innerPatIndex] === 1) {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 1;
+                } else {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 0;
+                }
+                innerPatIndex++;
+            } else {
+                masterPatA[i] = 0;
+                masterPatB[i] = 0;
+            }
+            patIndex++;
+        }
+
+    } else if (pow(2,subDivSld.value()) === 16) { // sixteenth notes
+        console.log('sixteenth notes');
+
+        patIndex = 0;
+        innerPatIndex = 0;
+
+        for (let i = mpLength; i < (2*numLinesWide)+mpLength; i++) {
+
+            if (patIndex % 2 === 0) {
+                if (aPat[patIndex+innerPatIndex] === 1 && bPat[patIndex+innerPatIndex] === 1) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 1;
+                } else if (aPat[patIndex+innerPatIndex] === 1 && bPat[patIndex+innerPatIndex] === 0) {
+                    masterPatA[i] = 1;
+                    masterPatB[i] = 0;
+                } else if (aPat[patIndex+innerPatIndex] === 0 && bPat[patIndex+innerPatIndex] === 1) {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 1;
+                } else {
+                    masterPatA[i] = 0;
+                    masterPatB[i] = 0;
+                }
+                innerPatIndex++;
+            } else {
+                masterPatA[i] = 0;
+                masterPatB[i] = 0;
+            }
+            patIndex++;
+        }
+
+    } else if (pow(2,subDivSld.value()) === 32) { // thirty second notes
+        console.log('thirty second notes');
+
+        for (let i = mpLength; i < numLinesWide+mpLength; i++) {
+
+            if (aPat[i] === 1 && bPat[i] === 1) {
+                masterPatA[i] = 1;
+                masterPatB[i] = 1;
+            } else if (aPat[i] === 1 && bPat[i] === 0) {
+                masterPatA[i] = 1;
+                masterPatB[i] = 0;
+            } else if (aPat[i] === 0 && bPat[i] === 1) {
+                masterPatA[i] = 0;
+                masterPatB[i] = 1;
+            } else {
+                masterPatA[i] = 0;
+                masterPatB[i] = 0;
+            }
+
+        }
+
     }
     console.log([[...masterPatA], [...masterPatB]]);
+
 }
 
 function draw() { // this function gets called 60 times a second, arbitrarily
@@ -421,6 +626,7 @@ function togglePlay() {
     // makes sure pattern is updates
     // createPatterns();
     checkBPM();
+    drums.setBPM(tempoSld.value()/2);
 
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
