@@ -43,17 +43,15 @@ let innerPatIndex;
 /**
  * OPEN TICKETS
  * - getMatrixDim() should be a one liner
- * - write exportMeasure to handle 16ths and half notes
- * - the base subdivision of masterPatA&B must be 32nd notes
- * - subsequently, the tempo of play must some X multiples of 2 to compensate
  * - alignment wrong on top row on the 7/8-16-32 matrix
- * - record button also to produce square of data - numBeats & subD
  * - get the beat visualization to map with measure sequencing
- * - top part needs stop button?
  * - make lower tempo slider work
  * - clean matrix display on odd number of beats
  * - make placeholders for the squares in measure sequencing
- * !!! fix sixteenth and 32nd note exports !!!
+ * - make units of tempo responsive and more informative
+ * - must make drop down menus for user input, if not typed fields
+ * !!! make tempo slider dynamic while measure sequences play !!!
+ * ---- fix the discrepancy between upper and lower tempo, find out which one is closest
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -71,7 +69,7 @@ function setup() {
     stroke('gray');
     fill('white');
     textFont('Righteous');
-    text('Multi-meter Sequencer', 200, 30);
+    text('Multi-meter Metronome', 200, 30);
 
     // sound sources
     aa = loadSound('./assets/first_sound.wav', function() {});
@@ -190,13 +188,16 @@ function setup() {
     resetBtnB.position(305+100, 410);
     resetBtnB.mousePressed(resetMSBtn);
 
-    tempoSldB = createSlider(30,300,tempoSld.value());
-    tempoSldB.position(500, 410);
+    // tempoSldB = createSlider(30,300,tempoSld.value());
+    // tempoSldB.position(500, 410);
+    // tempoSldB.input(() => {
+    //     drums.setTempo()
+    // });
 
-    // tempo label - needs cleanup/mods
-    textSize(16);
-    stroke(1);
-    text('Relative Tempo', 495, 320);
+    // // tempo label - needs cleanup/mods
+    // textSize(16);
+    // stroke(1);
+    // text('Relative Tempo', 495, 320);
 
     // cell width
     cellWidth = matrixWidth/numLinesWide;
@@ -247,6 +248,27 @@ function setup() {
     fill('white');
     stroke('black');
     text(tempoVal*2, tempoSld.x-5,165);
+
+    // print ghost squares
+    let fillIndex = 200;
+    fill(255,255,255,fillIndex);
+    stroke('white');
+    let leftGridBorder = leftSqBorder;
+    let gridRowIndex = 0;
+    let gridHeightIndex = 400;
+    for (let i = 0; i < 48; i++) {
+        if (i % 8 === 0 && i != 0) {
+            gridHeightIndex += 60;
+            gridRowIndex = 0;
+            rect(leftGridBorder+(gridRowIndex*60), gridHeightIndex, 50, 50);
+            gridRowIndex++;
+            fillIndex -= 30;
+            fill(255,255,255,fillIndex);
+        } else {
+            rect(leftGridBorder+(gridRowIndex*60), gridHeightIndex, 50, 50);
+            gridRowIndex++;
+        }
+    }
 }
 
 function beatsBtn() { // i don't remember why this is here
@@ -303,6 +325,27 @@ function resetMSBtn() {
     fill('red');
     stroke('red');
     rect(100, 380, 650, 650);
+
+    // print ghost squares
+    let fillIndex = 200;
+    fill(255,255,255,fillIndex);
+    stroke('white');
+    let leftGridBorder = leftSqBorder;
+    let gridRowIndex = 0;
+    let gridHeightIndex = 400;
+    for (let i = 0; i < 48; i++) {
+        if (i % 8 === 0 && i != 0) {
+            gridHeightIndex += 60;
+            gridRowIndex = 0;
+            rect(leftGridBorder+(gridRowIndex*60), gridHeightIndex, 50, 50);
+            gridRowIndex++;
+            fillIndex -= 30;
+            fill(255,255,255,fillIndex);
+        } else {
+            rect(leftGridBorder+(gridRowIndex*60), gridHeightIndex, 50, 50);
+            gridRowIndex++;
+        }
+    }
 }
 
 function exportMeasure() {
