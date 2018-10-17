@@ -428,20 +428,24 @@ function exportMeasure() {
         innerPatIndex = 0;
 
         for (let i = mpLength; i < (2*numLinesWide)+mpLength; i++) {
-
             if (patIndex % 2 === 0) {
-                if (aPat[patIndex+innerPatIndex] === 1 && bPat[patIndex+innerPatIndex] === 1) {
+                console.log(bPat[patIndex/2]);
+                if (aPat[patIndex/2] === 1 && bPat[patIndex/2] === 1) {
                     masterPatA[i] = 1;
                     masterPatB[i] = 1;
-                } else if (aPat[patIndex+innerPatIndex] === 1 && bPat[patIndex+innerPatIndex] === 0) {
+                    console.log('note created');
+                } else if (aPat[patIndex/2] === 1 && bPat[patIndex/2] === 0) {
                     masterPatA[i] = 1;
                     masterPatB[i] = 0;
-                } else if (aPat[patIndex+innerPatIndex] === 0 && bPat[patIndex+innerPatIndex] === 1) {
+                    console.log('note created');
+                } else if (aPat[patIndex/2] === 0 && bPat[patIndex/2] === 1) {
                     masterPatA[i] = 0;
                     masterPatB[i] = 1;
+                    console.log('note created');
                 } else {
                     masterPatA[i] = 0;
                     masterPatB[i] = 0;
+                    console.log('note created');
                 }
                 innerPatIndex++;
             } else {
@@ -456,13 +460,13 @@ function exportMeasure() {
 
         for (let i = mpLength; i < numLinesWide+mpLength; i++) {
 
-            if (aPat[i] === 1 && bPat[i] === 1) {
+            if (aPat[i-mpLength] === 1 && bPat[i-mpLength] === 1) {
                 masterPatA[i] = 1;
                 masterPatB[i] = 1;
-            } else if (aPat[i] === 1 && bPat[i] === 0) {
+            } else if (aPat[i-mpLength] === 1 && bPat[i-mpLength] === 0) {
                 masterPatA[i] = 1;
                 masterPatB[i] = 0;
-            } else if (aPat[i] === 0 && bPat[i] === 1) {
+            } else if (aPat[i-mpLength] === 0 && bPat[i-mpLength] === 1) {
                 masterPatA[i] = 0;
                 masterPatB[i] = 1;
             } else {
