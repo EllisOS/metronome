@@ -55,6 +55,7 @@ let seqIsPlaying = false; // flag for whether measure sequencing is playing or n
  * !!! make tempo slider dynamic while measure sequences play !!!
  * - dimensions of canvas tied to window width/height, make entire app responsive
  * - attempt measure visualization with same strat as beat vis
+ * - ensure the fill and stroke of numBeats, subDVal and stuff inside of drawMatrix()
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -290,16 +291,19 @@ function beatsBtn() { // i don't remember why this is here
 function playMSBtn() {
     drums.replaceSequence('aa', masterPatA);
     drums.replaceSequence('bb', masterPatB);
-
+    drums.removePhrase('seq');
     console.log('sequences replaced');
     drums.setBPM((2*tempoSld.value())-40);
-    makeBorder();
+    leftSqBorder = 150;
+    topSqBorder = 400;
 
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
+            drums.addPhrase('seq', sequence, masterPatS);
             console.log('starting loop');
             // console.log(masterPatA);
+            seqIsPlaying = true;
             // console.log(masterPatB);
             drums.metro.metroTicks = 0; // reset loop to start 
             drums.loop();
@@ -309,12 +313,13 @@ function playMSBtn() {
             drums.replaceSequence('aa', aPat);
             drums.replaceSequence('bb', bPat);
             drawMatrix();
+            seqIsPlaying = false;
         }
     } else { // if sounds haven't loaded yet
         console.log('hold on a sec');
     }
     
-    seqIsPlaying = true;
+    
 }
 
 function stopMSBtn() {
@@ -392,12 +397,12 @@ function exportMeasure() {
 
     // making everything 32nd note based
     if (pow(2,subDivSld.value()) === 1) { // whole notes
-        console.log('whole notes');
+        // console.log('whole notes');
     } else if (pow(2,subDivSld.value()) === 2) { // half notes
-        console.log('half notes');
+        // console.log('half notes');
         patIndex = 0;
         innerPatIndex = 0;
-        console.log(bPat);
+        // console.log(bPat);
         for (let i = mpLength; i < (8*numLinesWide)+mpLength; i++) {
             if (patIndex % 8 === 0) {
                 if (aPat[(patIndex%4)+innerPatIndex] === 1 && bPat[(patIndex%4)+innerPatIndex] === 1) {
@@ -423,7 +428,7 @@ function exportMeasure() {
                 masterPatB[i] = 0;
             }
 
-            if (patIndex === 0 && i != 0) {
+            if (patIndex === 0) {
                 masterPatS[i] = 1;
             } else {
                 masterPatS[i] = 0;
@@ -435,7 +440,7 @@ function exportMeasure() {
         }
 
     } else if (pow(2,subDivSld.value()) === 4) { // quarter notes
-        console.log('quarter notes');
+        // console.log('quarter notes');
 
         patIndex = 0;
         innerPatIndex = 0;
@@ -462,7 +467,7 @@ function exportMeasure() {
                 masterPatB[i] = 0;
             }
 
-            if (patIndex === 0 && i != 0) {
+            if (patIndex === 0) {
                 masterPatS[i] = 1;
             } else {
                 masterPatS[i] = 0;
@@ -472,7 +477,7 @@ function exportMeasure() {
         }
 
     } else if (pow(2,subDivSld.value()) === 8) { // eighth notes
-        console.log('eighth notes');
+        // console.log('eighth notes');
 
         patIndex = 0;
         innerPatIndex = 0;
@@ -498,7 +503,7 @@ function exportMeasure() {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
-            if (patIndex === 0 && i != 0) {
+            if (patIndex === 0) {
                 masterPatS[i] = 1;
             } else {
                 masterPatS[i] = 0;
@@ -507,37 +512,37 @@ function exportMeasure() {
         }
 
     } else if (pow(2,subDivSld.value()) === 16) { // sixteenth notes
-        console.log('sixteenth notes');
+        // console.log('sixteenth notes');
 
         patIndex = 0;
         innerPatIndex = 0;
 
         for (let i = mpLength; i < (2*numLinesWide)+mpLength; i++) {
             if (patIndex % 2 === 0) {
-                console.log(bPat[patIndex/2]);
+                // console.log(bPat[patIndex/2]);
                 if (aPat[patIndex/2] === 1 && bPat[patIndex/2] === 1) {
                     masterPatA[i] = 1;
                     masterPatB[i] = 1;
-                    console.log('note created');
+                    // console.log('note created');
                 } else if (aPat[patIndex/2] === 1 && bPat[patIndex/2] === 0) {
                     masterPatA[i] = 1;
                     masterPatB[i] = 0;
-                    console.log('note created');
+                    // console.log('note created');
                 } else if (aPat[patIndex/2] === 0 && bPat[patIndex/2] === 1) {
                     masterPatA[i] = 0;
                     masterPatB[i] = 1;
-                    console.log('note created');
+                    // console.log('note created');
                 } else {
                     masterPatA[i] = 0;
                     masterPatB[i] = 0;
-                    console.log('note created');
+                    // console.log('note created');
                 }
                 innerPatIndex++;
             } else {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
-            if (patIndex === 0 && i != 0) {
+            if (patIndex === 0) {
                 masterPatS[i] = 1;
             } else {
                 masterPatS[i] = 0;
@@ -546,7 +551,7 @@ function exportMeasure() {
         }
 
     } else if (pow(2,subDivSld.value()) === 32) { // thirty second notes
-        console.log('thirty second notes');
+        // console.log('thirty second notes');
 
         for (let i = mpLength; i < numLinesWide+mpLength; i++) {
 
@@ -577,10 +582,10 @@ function exportMeasure() {
 
 function makeBorder() {
     console.log('making border, border index: ' + borderIndex);
-    console.log('measure index: ' + measureIndex);
+    // console.log('measure index: ' + measureIndex);
     if (borderIndex === measureIndex) borderIndex = 0;
     if (borderIndex === 0) {
-        console.log('first square');
+        // console.log('first square');
         borderIndex++;
         // // fill(0,255,0,70);
         // stroke(0,255,0);
@@ -591,7 +596,7 @@ function makeBorder() {
         // line(leftSqBorder+50, topSqBorder+50, leftSqBorder+50, topSqBorder);
         // line(leftSqBorder+50, topSqBorder, leftSqBorder, topSqBorder);
     } else {
-        console.log('subsequent squares');
+        // console.log('subsequent squares');
         borderIndex++;
 
         // stroke(255,0,0);
@@ -608,8 +613,8 @@ function makeBorder() {
         // line(leftSqBorder+50, topSqBorder, leftSqBorder, topSqBorder);
     }
 
-    if (borderIndex === measureCount) {
-        console.log('start over now');
+    if (borderIndex === measureCount) { // could also be measureIndex??
+        // console.log('start over now');
         borderIndex = 0;
     }
 
@@ -623,22 +628,49 @@ function draw() { // this function gets called 60 times a second, arbitrarily
 
     textSize(18);
     fill('white');
+    stroke('white');
+    strokeWeight(0);
     text(beatsVal, numBeatsSld.x+5,65);
     text(subDVal, subDivSld.x+5,65);
 
-    if (masterPatS[drums.metro.metroTicks] === 1) {
-        makeBorder();
-    }
+    // if (masterPatS[drums.metro.metroTicks] === 1 && seqIsPlaying) {
+    //     makeBorder();
+    // }
 
 }
 
 function sequence(time, beatIndex) {
-    
+    // console.log(beatIndex);
     if (seqIsPlaying) {
 
         stroke('red');
         fill(255,0,0);
         rect(matrixX-10, matrixY-10, 320, 80);
+        console.log(borderIndex);
+        console.log(measureCount);
+        const mcTMP = measureCount;
+        if (borderIndex === 0) {
+            stroke(0,255,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*(borderIndex)), topSqBorder, leftSqBorder+50+(60*(borderIndex)), topSqBorder);
+            stroke(255,0,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*(borderIndex+measureIndex-1)), topSqBorder, leftSqBorder+50+(60*(borderIndex+measureIndex-1)), topSqBorder);
+            makeBorder();
+        } else {
+            stroke(0,255,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*(borderIndex)), topSqBorder, leftSqBorder+50+(60*(borderIndex)), topSqBorder);
+            stroke(255,0,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*(borderIndex-1)), topSqBorder, leftSqBorder+50+(60*(borderIndex-1)), topSqBorder);
+            makeBorder();
+        }
+        // if(measureCount === 7) {
+        //     borderIndex = 0;
+
+
+        // } 
 
     } else {
         // console.log(beatIndex);
@@ -647,7 +679,6 @@ function sequence(time, beatIndex) {
         fill(255,0,0,30);
         rect(matrixX + ((beatIndex-1)*cellWidth), matrixY, cellWidth, matrixHeight);
     }
-
 }
 
 function createPatterns() {
@@ -813,7 +844,7 @@ function drawMatrix() {
     // console.log('numLinesWide ' + numLinesWide);
     // background(80);
     fill(80);
-    stroke('white');
+    stroke(80);
     rect(550, 100, 300, 60);
 
     stroke('gray');
