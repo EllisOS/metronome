@@ -43,6 +43,7 @@ let measureIndex = 0; // index of measures in masterPat
 let patIndex; // index variable used in exporting measures to sequencer
 let innerPatIndex;
 let seqIsPlaying = false; // flag for whether measure sequencing is playing or not
+let sequenceIndex = 0;
 
 /**
  * OPEN TICKETS
@@ -639,9 +640,11 @@ function draw() { // this function gets called 60 times a second, arbitrarily
 
 }
 
+
 function sequence(time, beatIndex) {
     // console.log(beatIndex);
     if (seqIsPlaying) {
+        
 
         stroke('red');
         fill(255,0,0);
@@ -649,28 +652,49 @@ function sequence(time, beatIndex) {
         console.log(borderIndex);
         console.log(measureCount);
         const mcTMP = measureCount;
-        if (borderIndex === 0) {
+        if (sequenceIndex === 0) {
             stroke(0,255,0);
             strokeWeight(3);
-            line(leftSqBorder+(60*(borderIndex)), topSqBorder, leftSqBorder+50+(60*(borderIndex)), topSqBorder);
+            line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
             stroke(255,0,0);
             strokeWeight(3);
-            line(leftSqBorder+(60*(borderIndex+measureIndex-1)), topSqBorder, leftSqBorder+50+(60*(borderIndex+measureIndex-1)), topSqBorder);
+            line(leftSqBorder+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))), leftSqBorder+50+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))));
+            makeBorder();
+        } else if ((sequenceIndex+1) % 8 === 0) {
+            stroke(255,0,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*((sequenceIndex%8)-1)), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8)-1)), topSqBorder);
+            stroke(0,255,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
+            makeBorder();
+            leftSqBorder=150;
+            topSqBorder+=60;
+        } else if (sequenceIndex%8 === 0) {
+
+            stroke(0,255,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
+            stroke(255,0,0);
+            strokeWeight(3);
+            line(leftSqBorder+(60*7), topSqBorder-60, leftSqBorder+50+(60*7), topSqBorder-60);
             makeBorder();
         } else {
             stroke(0,255,0);
             strokeWeight(3);
-            line(leftSqBorder+(60*(borderIndex)), topSqBorder, leftSqBorder+50+(60*(borderIndex)), topSqBorder);
+            line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
             stroke(255,0,0);
             strokeWeight(3);
-            line(leftSqBorder+(60*(borderIndex-1)), topSqBorder, leftSqBorder+50+(60*(borderIndex-1)), topSqBorder);
+            line(leftSqBorder+(60*((sequenceIndex%8)-1)), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8)-1)), topSqBorder);
             makeBorder();
         }
-        // if(measureCount === 7) {
-        //     borderIndex = 0;
-
-
-        // } 
+        sequenceIndex++;
+        console.log(sequenceIndex);
+        console.log(measureCount)
+        if(sequenceIndex === measureCount) {
+            sequenceIndex = 0;
+            topSqBorder = 400;
+        }
 
     } else {
         // console.log(beatIndex);
