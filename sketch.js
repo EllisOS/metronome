@@ -28,6 +28,7 @@ let multiplier = 1; // used to determine the inner configuration of the matrix
 let numLinesWide = 8;
 let masterPatA = [];
 let masterPatB = [];
+let masterPatS = [];
 let cc; // first sound source
 let dd; // second sound source
 let playBtnB; // buttons/slider for Measure Sequencing
@@ -36,22 +37,24 @@ let resetBtnB;
 let tempoSldB;
 let leftSqBorder = 150; // starting point for measures
 let topSqBorder = 400;
+let borderIndex = 0; // keeps track of measure visualization
+let measureCount = 0;
 let measureIndex = 0; // index of measures in masterPat
 let patIndex; // index variable used in exporting measures to sequencer
 let innerPatIndex;
+let seqIsPlaying = false; // flag for whether measure sequencing is playing or not
 
 /**
  * OPEN TICKETS
  * - getMatrixDim() should be a one liner
  * - alignment wrong on top row on the 7/8-16-32 matrix
  * - get the beat visualization to map with measure sequencing
- * - make lower tempo slider work
  * - clean matrix display on odd number of beats
- * - make placeholders for the squares in measure sequencing
  * - make units of tempo responsive and more informative
  * - must make drop down menus for user input, if not typed fields
  * !!! make tempo slider dynamic while measure sequences play !!!
- * ---- fix the discrepancy between upper and lower tempo, find out which one is closest
+ * - dimensions of canvas tied to window width/height, make entire app responsive
+ * - attempt measure visualization with same strat as beat vis
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -96,7 +99,7 @@ function setup() {
 
     // subdivision slider
     // 0-5 base to represent pow(2,n)
-    subDivSld = createSlider(0,5,2);
+    subDivSld = createSlider(1,5,2);
     subDivSld.position(320, 150);
     subDivSld.style('width', '160px');
     subDivSld.input(() => {
@@ -121,7 +124,12 @@ function setup() {
         fill('white');
         textSize(20);
         text(tempoSld.value(), tempoSld.x-8, tempoSld.y-84);
-        drums.setBPM(tempoSld.value()/2);
+        if(seqIsPlaying) {
+            drums.setBPM((2*tempoSld.value())-40);
+        } else {
+            drums.setBPM(tempoSld.value()/2);
+        }
+        
     });
 
     // start/stop button
@@ -139,22 +147,26 @@ function setup() {
             leftSqBorder = 150;
             measureIndex = 0;
             fill('orange');
+            stroke('orange');
             rect(leftSqBorder+(60*measureIndex), topSqBorder, 50, 50);
-            fill('black');
+            stroke('black');
             strokeWeight(2);
-            line(leftSqBorder+(60*measureIndex)+7, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
+            line(leftSqBorder+(60*measureIndex), topSqBorder+45, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
             strokeWeight(1);
-            textSize(24);
+            textSize(20);
+            fill('black');
             text(numBeatsSld.value(), leftSqBorder+(60*measureIndex)+7, topSqBorder+24);
             text(pow(2,subDivSld.value()), leftSqBorder+(60*measureIndex)+30, topSqBorder+42);
         } else {
             fill('orange');
+            stroke('orange');
             rect(leftSqBorder+(60*measureIndex), topSqBorder, 50, 50);
-            fill('black');
+            stroke('black');
             strokeWeight(2);
-            line(leftSqBorder+(60*measureIndex)+7, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
+            line(leftSqBorder+(60*measureIndex)+10, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
             strokeWeight(1);
-            textSize(24);
+            textSize(20);
+            fill('black');
             text(numBeatsSld.value(), leftSqBorder+(60*measureIndex)+7, topSqBorder+24);
             text(pow(2,subDivSld.value()), leftSqBorder+(60*measureIndex)+30, topSqBorder+42);
         }
@@ -280,14 +292,15 @@ function playMSBtn() {
     drums.replaceSequence('bb', masterPatB);
 
     console.log('sequences replaced');
-    drums.setBPM(2*tempoSld.value());
+    drums.setBPM((2*tempoSld.value())-40);
+    makeBorder();
 
     // makes sure sounds are loaded before trying to play drums    
     if (aa.isLoaded() && bb.isLoaded()) {
         if (!drums.isPlaying) {
             console.log('starting loop');
-            console.log(masterPatA);
-            console.log(masterPatB);
+            // console.log(masterPatA);
+            // console.log(masterPatB);
             drums.metro.metroTicks = 0; // reset loop to start 
             drums.loop();
         } else {
@@ -295,11 +308,13 @@ function playMSBtn() {
             drums.setBPM(tempoSld.value());
             drums.replaceSequence('aa', aPat);
             drums.replaceSequence('bb', bPat);
+            drawMatrix();
         }
     } else { // if sounds haven't loaded yet
         console.log('hold on a sec');
     }
     
+    seqIsPlaying = true;
 }
 
 function stopMSBtn() {
@@ -308,6 +323,8 @@ function stopMSBtn() {
     drums.metro.metroTicks = 0; // reset loop to start
     drums.replaceSequence('aa', aPat);
     drums.replaceSequence('bb', bPat);
+    seqIsPlaying = false;
+    drawMatrix();
     console.log('sequences replaced, loop restarted');
 }
 
@@ -320,6 +337,10 @@ function resetMSBtn() {
     measureIndex = 0;
     topSqBorder = 400;
     leftSqBorder = 150;
+    measureCount = 0;
+    borderIndex = 0;
+    seqIsPlaying = false;
+    drawMatrix();
 
     // erase squares with rect
     fill('red');
@@ -401,7 +422,16 @@ function exportMeasure() {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
+
+            if (patIndex === 0 && i != 0) {
+                masterPatS[i] = 1;
+            } else {
+                masterPatS[i] = 0;
+            }
+
             patIndex++;
+
+            
         }
 
     } else if (pow(2,subDivSld.value()) === 4) { // quarter notes
@@ -431,6 +461,13 @@ function exportMeasure() {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
+
+            if (patIndex === 0 && i != 0) {
+                masterPatS[i] = 1;
+            } else {
+                masterPatS[i] = 0;
+            }
+
             patIndex++;
         }
 
@@ -460,6 +497,11 @@ function exportMeasure() {
             } else {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
+            }
+            if (patIndex === 0 && i != 0) {
+                masterPatS[i] = 1;
+            } else {
+                masterPatS[i] = 0;
             }
             patIndex++;
         }
@@ -495,6 +537,11 @@ function exportMeasure() {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
+            if (patIndex === 0 && i != 0) {
+                masterPatS[i] = 1;
+            } else {
+                masterPatS[i] = 0;
+            }
             patIndex++;
         }
 
@@ -516,11 +563,55 @@ function exportMeasure() {
                 masterPatA[i] = 0;
                 masterPatB[i] = 0;
             }
-
+            if (i === mpLength && i != 0) {
+                masterPatS[i] = 1;
+            } else {
+                masterPatS[i] = 0;
+            }
         }
 
     }
     console.log([[...masterPatA], [...masterPatB]]);
+    measureCount++;
+}
+
+function makeBorder() {
+    console.log('making border, border index: ' + borderIndex);
+    console.log('measure index: ' + measureIndex);
+    if (borderIndex === measureIndex) borderIndex = 0;
+    if (borderIndex === 0) {
+        console.log('first square');
+        borderIndex++;
+        // // fill(0,255,0,70);
+        // stroke(0,255,0);
+        // strokeWeight(2);
+        // rect(leftSqBorder, topSqBorder, 50, 50);  // to change x, use "+(60*measureIndex)"
+        // line(leftSqBorder, topSqBorder, leftSqBorder, topSqBorder+50);
+        // line(leftSqBorder, topSqBorder+50, leftSqBorder+50, topSqBorder+50);
+        // line(leftSqBorder+50, topSqBorder+50, leftSqBorder+50, topSqBorder);
+        // line(leftSqBorder+50, topSqBorder, leftSqBorder, topSqBorder);
+    } else {
+        console.log('subsequent squares');
+        borderIndex++;
+
+        // stroke(255,0,0);
+        // strokeWeight(2);
+        // line(leftSqBorder-60, topSqBorder, leftSqBorder-60, topSqBorder+50);
+        // line(leftSqBorder-60, topSqBorder+50, leftSqBorder-60+50, topSqBorder+50);
+        // line(leftSqBorder-60+50, topSqBorder+50, leftSqBorder-60+50, topSqBorder);
+        // line(leftSqBorder-60+50, topSqBorder, leftSqBorder-60, topSqBorder);
+
+        // stroke(0,255,0);
+        // line(leftSqBorder, topSqBorder, leftSqBorder, topSqBorder+50);
+        // line(leftSqBorder, topSqBorder+50, leftSqBorder+50, topSqBorder+50);
+        // line(leftSqBorder+50, topSqBorder+50, leftSqBorder+50, topSqBorder);
+        // line(leftSqBorder+50, topSqBorder, leftSqBorder, topSqBorder);
+    }
+
+    if (borderIndex === measureCount) {
+        console.log('start over now');
+        borderIndex = 0;
+    }
 
 }
 
@@ -535,15 +626,27 @@ function draw() { // this function gets called 60 times a second, arbitrarily
     text(beatsVal, numBeatsSld.x+5,65);
     text(subDVal, subDivSld.x+5,65);
 
+    if (masterPatS[drums.metro.metroTicks] === 1) {
+        makeBorder();
+    }
+
 }
 
 function sequence(time, beatIndex) {
     
-    // console.log(beatIndex);
-    drawMatrix();
-    stroke('yellow');
-    fill(255,0,0,30);
-    rect(matrixX + ((beatIndex-1)*cellWidth), matrixY, cellWidth, matrixHeight);
+    if (seqIsPlaying) {
+
+        stroke('red');
+        fill(255,0,0);
+        rect(matrixX-10, matrixY-10, 320, 80);
+
+    } else {
+        // console.log(beatIndex);
+        drawMatrix();
+        stroke('yellow');
+        fill(255,0,0,30);
+        rect(matrixX + ((beatIndex-1)*cellWidth), matrixY, cellWidth, matrixHeight);
+    }
 
 }
 
