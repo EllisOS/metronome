@@ -4,6 +4,7 @@ let tempoSld; // tempo slider
 let startStopBtn; // start/stop button
 let resetBtn; // reset button
 let recordBtn; // record button
+let reloadBtn; // button to refresh web page
 let beatsVal = 4; // defaults... 4/4 @ 120
 let subDVal = 4;
 let tempoVal = 60;
@@ -48,15 +49,12 @@ let sequenceIndex = 0;
 /**
  * OPEN TICKETS
  * - getMatrixDim() should be a one liner
- * - alignment wrong on top row on the 7/8-16-32 matrix
  * - get the beat visualization to map with measure sequencing
- * - clean matrix display on odd number of beats
  * - make units of tempo responsive and more informative
  * - must make drop down menus for user input, if not typed fields
- * !!! make tempo slider dynamic while measure sequences play !!!
  * - dimensions of canvas tied to window width/height, make entire app responsive
- * - attempt measure visualization with same strat as beat vis
- * - ensure the fill and stroke of numBeats, subDVal and stuff inside of drawMatrix()
+ * - write cleanMeasure() method
+ * - fix some dangling data when stop or reset are pressed on the sequencer
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -153,7 +151,7 @@ function setup() {
             rect(leftSqBorder+(60*measureIndex), topSqBorder, 50, 50);
             stroke('black');
             strokeWeight(2);
-            line(leftSqBorder+(60*measureIndex), topSqBorder+45, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
+            line(leftSqBorder+(60*measureIndex)+10, topSqBorder+40, leftSqBorder+(60*measureIndex)+40, topSqBorder+10);
             strokeWeight(1);
             textSize(20);
             fill('black');
@@ -172,7 +170,6 @@ function setup() {
             text(numBeatsSld.value(), leftSqBorder+(60*measureIndex)+7, topSqBorder+24);
             text(pow(2,subDivSld.value()), leftSqBorder+(60*measureIndex)+30, topSqBorder+42);
         }
-        
         measureIndex++;
         exportMeasure();
     });
@@ -182,6 +179,13 @@ function setup() {
     resetBtn = createButton('Reset');
     resetBtn.mousePressed(resetMatrix);
     resetBtn.position(420, 250);
+
+    // page refresh button
+    reloadBtn = createButton('Refresh Page');
+    reloadBtn.mousePressed(() => {
+        window.location.reload();
+    });
+    reloadBtn.position(800, 100);
 
     // lower sequencer section --------------------------------------------------
     // text
@@ -324,6 +328,17 @@ function playMSBtn() {
 }
 
 function stopMSBtn() {
+    console.log('stopping sequence, border index: ' + borderIndex);
+    // erase last sequence visualization
+    cleanMeasure(borderIndex);
+
+    // reset data
+    leftSqBorder = 150; // starting point for measures
+    topSqBorder = 400;
+    borderIndex = 0;
+    sequenceIndex = 0;
+    seqIsPlaying = false;
+
     drums.stop();
     drums.setBPM(tempoSld.value());
     drums.metro.metroTicks = 0; // reset loop to start
@@ -346,6 +361,7 @@ function resetMSBtn() {
     measureCount = 0;
     borderIndex = 0;
     seqIsPlaying = false;
+    sequenceIndex = 0;
     drawMatrix();
 
     // erase squares with rect
@@ -357,6 +373,7 @@ function resetMSBtn() {
     let fillIndex = 200;
     fill(255,255,255,fillIndex);
     stroke('white');
+    strokeWeight(0);
     let leftGridBorder = leftSqBorder;
     let gridRowIndex = 0;
     let gridHeightIndex = 400;
@@ -373,6 +390,10 @@ function resetMSBtn() {
             gridRowIndex++;
         }
     }
+}
+
+function cleanMeasure(borderIndex) {
+    console.log('cleaning last played measure');
 }
 
 function exportMeasure() {
@@ -645,13 +666,11 @@ function sequence(time, beatIndex) {
     // console.log(beatIndex);
     if (seqIsPlaying) {
         
-
         stroke('red');
         fill(255,0,0);
         rect(matrixX-10, matrixY-10, 320, 80);
         console.log(borderIndex);
         console.log(measureCount);
-        const mcTMP = measureCount;
         if (sequenceIndex === 0) {
             stroke(0,255,0);
             strokeWeight(3);
@@ -881,10 +900,14 @@ function drawMatrix() {
     for (let i = 0; i < 3; i++) {
         line(matrixX, (i * matrixHeight / 2) + matrixY, matrixWidth + matrixX, (i * matrixHeight / 2) + matrixY);
     }
-    // console.log(numLinesWide);
+    console.log('number of lines wide: '+numLinesWide);
     for (let i = 0; i < numLinesWide; i++) {
-        if (aPat[i] === 1) { // may have to fix this later.... maybe not
-            ellipse((i * matrixWidth / (numLinesWide) + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+        if (aPat[i] === 1) { // conditionals place ellipses depending on subdivision
+            if (pow(2,subDivSld.value()) >= 8) {
+                ellipse((i * matrixWidth / (numLinesWide) + 0.5 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+            } else {
+                ellipse((i * matrixWidth / (numLinesWide) + 0.25 * matrixWidth / beatsVal) + matrixX, matrixY + (matrixHeight/4), 15);
+            }
         }
         if (bPat[i] === 1) {
             ellipse((i * matrixWidth / numLinesWide) + matrixX + ( 0.5 * matrixWidth / numLinesWide), matrixY + (matrixHeight/4) * 3, 15);
