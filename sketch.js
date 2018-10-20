@@ -56,6 +56,7 @@ let sequenceIndex = 0;
  * - write cleanMeasure() method
  * - fix some dangling data when stop or reset are pressed on the sequencer
  * - think about maybe labelling matrix
+ * - tons of issues with cleaning up the right side measure in visualization
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -672,9 +673,15 @@ function sequence(time, beatIndex) {
             stroke(0,255,0);
             strokeWeight(3);
             line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
-            stroke(255,0,0);
-            strokeWeight(3);
-            line(leftSqBorder+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))), leftSqBorder+50+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))));
+            if (measureCount === 8) {
+                stroke(255,0,0);
+                strokeWeight(3);
+                line(leftSqBorder+(60*7), topSqBorder, leftSqBorder+50+(60*7), topSqBorder); 
+            } else {
+                stroke(255,0,0);
+                strokeWeight(3);
+                line(leftSqBorder+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))), leftSqBorder+50+(60*((measureCount%8)-1)), topSqBorder+(60*(floor(measureCount/8))));     
+            }
             makeBorder();
         } else if ((sequenceIndex+1) % 8 === 0) {
             stroke(255,0,0);
@@ -686,14 +693,22 @@ function sequence(time, beatIndex) {
             makeBorder();
             leftSqBorder=150;
             topSqBorder+=60;
-        } else if (sequenceIndex%8 === 0) {
-
+        } else if (sequenceIndex%8 === 0) { // should remove these lines for goodt!!
+            console.log(sequenceIndex)
             stroke(0,255,0);
             strokeWeight(3);
             line(leftSqBorder+(60*((sequenceIndex%8))), topSqBorder, leftSqBorder+50+(60*((sequenceIndex%8))), topSqBorder);
-            stroke(255,0,0);
-            strokeWeight(3);
-            line(leftSqBorder+(60*7), topSqBorder-60, leftSqBorder+50+(60*7), topSqBorder-60);
+            // if (sequenceIndex === 8) {
+            //     console.log('first');
+            //     stroke(255,0,0);
+            //     strokeWeight(3);
+            //     line(leftSqBorder+(60*7), topSqBorder, leftSqBorder+50+(60*7), topSqBorder);
+            // } else {
+            //     console.log('second');
+            //     stroke(255,0,0);
+            //     strokeWeight(3);
+            //     line(leftSqBorder+(60*7), topSqBorder-60, leftSqBorder+50+(60*7), topSqBorder-60);
+            // }
             makeBorder();
         } else {
             stroke(0,255,0);
