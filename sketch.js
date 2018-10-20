@@ -55,6 +55,7 @@ let sequenceIndex = 0;
  * - dimensions of canvas tied to window width/height, make entire app responsive
  * - write cleanMeasure() method
  * - fix some dangling data when stop or reset are pressed on the sequencer
+ * - think about maybe labelling matrix
  * 
  * ?? Tap Tempo ??
  * ?? eliminate user ability to choose whole notes as a subdivision ??
@@ -323,8 +324,6 @@ function playMSBtn() {
     } else { // if sounds haven't loaded yet
         console.log('hold on a sec');
     }
-    
-    
 }
 
 function stopMSBtn() {
@@ -639,7 +638,6 @@ function makeBorder() {
         // console.log('start over now');
         borderIndex = 0;
     }
-
 }
 
 function draw() { // this function gets called 60 times a second, arbitrarily
@@ -658,7 +656,6 @@ function draw() { // this function gets called 60 times a second, arbitrarily
     // if (masterPatS[drums.metro.metroTicks] === 1 && seqIsPlaying) {
     //     makeBorder();
     // }
-
 }
 
 
@@ -835,7 +832,6 @@ function checkBPM() { // do we need this??
 
 function resetMatrix() { // why doesn't this work??
     console.log('resetting matrix');
-    console.log('hello');
 }
 
 function togglePlay() {
@@ -900,7 +896,7 @@ function drawMatrix() {
     for (let i = 0; i < 3; i++) {
         line(matrixX, (i * matrixHeight / 2) + matrixY, matrixWidth + matrixX, (i * matrixHeight / 2) + matrixY);
     }
-    console.log('number of lines wide: '+numLinesWide);
+    // console.log('number of lines wide: '+numLinesWide);
     for (let i = 0; i < numLinesWide; i++) {
         if (aPat[i] === 1) { // conditionals place ellipses depending on subdivision
             if (pow(2,subDivSld.value()) >= 8) {
